@@ -1,0 +1,361 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User Models
+enum UserRole {
+  CUSTOMER
+  DEALER
+  DISTRIBUTOR
+  WORKSHOP
+  FLEET_OWNER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  VERIFIED
+}
+
+model User {
+  id              String      @id @default(cuid())
+  email           String      @unique
+  password        String
+  name            String?
+  phone           String?
+  role            UserRole    @default(CUSTOMER)
+  status          UserStatus  @default(PENDING)
+  profileImage    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  customerProfile Customer?
+  dealerProfile   Dealer?
+  orders          Order[]
+  reviews         Review[]
+  vehicles        Vehicle[]
+  wishlists       WishlistItem[]
+  cartItems       CartItem[]
+  serviceBookings ServiceBooking[]
+  
+  @@map("users")
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  loyaltyPoints   Int      @default(0)
+  dateOfBirth     DateTime?
+  preferredPayment String? // UPI, CARD, COD, etc.
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("customers")
+}
+
+model Dealer {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  companyName     String
+  gstNumber       String?
+  businessLicense String?
+  businessAddress String?
+  creditLimit     Float?   @default(0)
+  isVerified      Boolean  @default(false)
+  tier            Int      @default(1) // 1-5 for different pricing tiers
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("dealers")
+}
+
+// Product Models
+enum TyreCategory {
+  CAR
+  BIKE
+  TRUCK
+  BUS
+  TRACTOR
+  OFF_ROAD
+}
+
+enum TyreSeason {
+  ALL_SEASON
+  SUMMER
+  WINTER
+}
+
+model Brand {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  logo        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  tyres       Tyre[]
+  
+  @@map("brands")
+}
+
+model Tyre {
+  id              String       @id @default(cuid())
+  brandId         String
+  name            String
+  description     String?
+  category        TyreCategory
+  season          TyreSeason?
+  width           Float        // e.g., 205
+  aspectRatio     Float        // e.g., 55
+  rimDiameter     Float        // e.g., 16
+  loadIndex       Int?
+  speedRating     String?      // e.g., "H", "V"
+  price           Float
+  b2bPrice        Float?       // Dealer price
+  stock           Int          @default(0)
+  images          String?      // JSON array of image URLs
+  features        String?      // JSON array of features
+  fuelEfficiency  Int?         // 1-10 rating
+  wetGrip         Int?         // 1-10 rating
+  noiseLevel      Int?         // 1-10 rating
+  warranty        Int?         // Warranty in months
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  brand           Brand        @relation(fields: [brandId], references: [id])
+  reviews         Review[]
+  orderItems      OrderItem[]
+  cartItems       CartItem[]
+  wishlistItems   WishlistItem[]
+  compatibleVehicles CompatibleVehicle[]
+  
+  @@unique([brandId, name])
+  @@map("tyres")
+}
+
+model CompatibleVehicle {
+  id          String   @id @default(cuid())
+  tyreId      String
+  make        String   // e.g., "Toyota"
+  model       String   // e.g., "Camry"
+  year        Int
+  variant     String?
+  
+  tyre        Tyre     @relation(fields: [tyreId], references: [id], onDelete: Cascade)
+  
+  @@unique([tyreId, make, model, year])
+  @@map("compatible_vehicles")
+}
+
+// Vehicle Models
+model Vehicle {
+  id          String   @id @default(cuid())
+  userId      String
+  make        String
+  model       String
+  year        Int
+  variant     String?
+  licensePlate String?
+  currentTyreSpec String? // Current tyre specifications
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("vehicles")
+}
+
+// Order Models
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  UPI
+  CREDIT_CARD
+  DEBIT_CARD
+  WALLET
+  EMI
+  COD
+  CREDIT_LINE
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  userId          String
+  orderNumber     String        @unique
+  totalAmount     Float
+  discountAmount  Float         @default(0)
+  shippingAmount  Float         @default(0)
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   PaymentMethod?
+  shippingAddress Json          // JSON object with address details
+  billingAddress  Json?         // JSON object with address details
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  user            User          @relation(fields: [userId], references: [id])
+  orderItems      OrderItem[]
+  payments        Payment[]
+  
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String   @id @default(cuid())
+  orderId         String
+  tyreId          String
+  quantity        Int      @default(1)
+  unitPrice       Float
+  totalPrice      Float
+  
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  tyre            Tyre     @relation(fields: [tyreId], references: [id])
+  
+  @@map("order_items")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String
+  amount          Float
+  paymentMethod   PaymentMethod
+  transactionId   String?
+  status          PaymentStatus @default(PENDING)
+  paymentDate     DateTime?
+  gatewayResponse Json?         // JSON response from payment gateway
+  
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@map("payments")
+}
+
+// Shopping Cart Models
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  tyreId    String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tyre      Tyre     @relation(fields: [tyreId], references: [id])
+  
+  @@unique([userId, tyreId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  tyreId    String
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tyre      Tyre     @relation(fields: [tyreId], references: [id])
+  
+  @@unique([userId, tyreId])
+  @@map("wishlist_items")
+}
+
+// Review Models
+model Review {
+  id          String   @id @default(cuid())
+  userId      String
+  tyreId      String
+  rating      Int      // 1-5
+  title       String?
+  comment     String?
+  durability  Int?     // 1-5 rating
+  grip        Int?     // 1-5 rating
+  mileage     Int?     // 1-5 rating
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tyre        Tyre     @relation(fields: [tyreId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, tyreId])
+  @@map("reviews")
+}
+
+// Service Models
+enum ServiceType {
+  INSTALLATION
+  WHEEL_ALIGNMENT
+  WHEEL_BALANCING
+  NITROGEN_FILL
+  PUNCTURE_REPAIR
+  EMERGENCY_ASSISTANCE
+}
+
+enum ServiceStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model ServiceBooking {
+  id              String        @id @default(cuid())
+  userId          String
+  serviceType     ServiceType
+  bookingDate     DateTime
+  status          ServiceStatus @default(PENDING)
+  vehicleDetails  Json          // JSON with vehicle info
+  location        Json          // JSON with address/location
+  notes           String?
+  estimatedCost   Float?
+  actualCost      Float?
+  assignedTo      String?       // Partner garage ID
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("service_bookings")
+}
+
+// Admin/Settings Models
+model Settings {
+  id                    String   @id @default(cuid())
+  key                   String   @unique
+  value                 String
+  description           String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("settings")
+}
