@@ -14,21 +14,27 @@ async function createCustomServer() {
     // Create Next.js app
     const nextApp = next({ 
       dev,
-      dir: process.cwd(),
-      // In production, use the current directory where .next is located
-      conf: dev ? undefined : { distDir: './.next' }
+      dir: process.cwd()
     });
 
     await nextApp.prepare();
     const handle = nextApp.getRequestHandler();
 
     // Create HTTP server that will handle both Next.js and Socket.IO
-    const server = createServer((req, res) => {
+    const server = createServer(async (req, res) => {
       // Skip socket.io requests from Next.js handler
       if (req.url?.startsWith('/api/socketio')) {
         return;
       }
-      handle(req, res);
+      try {
+        await handle(req, res);
+      } catch (error) {
+        console.error('Error handling request:', error);
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.end('Internal Server Error');
+        }
+      }
     });
 
     // Setup Socket.IO
