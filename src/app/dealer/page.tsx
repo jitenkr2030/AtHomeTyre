@@ -107,12 +107,21 @@ export default function DealerDashboard() {
         setStats(data)
         
         // Set performance data
-        setPerformance({
-          tier: session.user.dealerProfile?.tier || 1,
-          totalVolume: data.totalOrders,
-          discountRate: data.totalOrders > 50 ? 15 : data.totalOrders > 20 ? 10 : 5,
-          nextTierTarget: (session.user.dealerProfile?.tier || 1) < 5 ? (session.user.dealerProfile?.tier || 1) * 25 : 100
-        })
+        if (session?.user?.dealerProfile) {
+          setPerformance({
+            tier: session.user.dealerProfile.tier || 1,
+            totalVolume: data.totalOrders,
+            discountRate: data.totalOrders > 50 ? 15 : data.totalOrders > 20 ? 10 : 5,
+            nextTierTarget: (session.user.dealerProfile.tier || 1) < 5 ? (session.user.dealerProfile.tier || 1) * 25 : 100
+          })
+        } else {
+          setPerformance({
+            tier: 1,
+            totalVolume: data.totalOrders,
+            discountRate: data.totalOrders > 50 ? 15 : data.totalOrders > 20 ? 10 : 5,
+            nextTierTarget: 25
+          })
+        }
       }
 
       // Fetch recent orders

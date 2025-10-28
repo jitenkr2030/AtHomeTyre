@@ -13,7 +13,11 @@ export async function GET(request: NextRequest) {
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: {
+        user: {
+          createdAt: 'desc'
+        }
+      }
     })
 
     return NextResponse.json({ dealers: pendingDealers })

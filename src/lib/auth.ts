@@ -69,22 +69,30 @@ export const authOptions: NextAuthOptions = {
         token.status = user.status
         token.customerProfile = user.customerProfile
         token.dealerProfile = user.dealerProfile
+        // Only add phone and profileImage if they exist on the user object
+        if ('phone' in user) {
+          token.phone = (user as any).phone
+        }
+        if ('profileImage' in user) {
+          token.profileImage = (user as any).profileImage
+        }
       }
       return token
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.sub!
-        session.user.role = token.role as string
-        session.user.status = token.status as string
+        session.user.role = token.role as any
+        session.user.status = token.status as any
         session.user.customerProfile = token.customerProfile as any
         session.user.dealerProfile = token.dealerProfile as any
+        session.user.phone = token.phone as string
+        session.user.profileImage = token.profileImage as string
       }
       return session
     }
   },
   pages: {
-    signIn: '/auth/signin',
-    signUp: '/auth/signup'
+    signIn: '/auth/signin'
   }
 }

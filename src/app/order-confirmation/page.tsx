@@ -22,6 +22,7 @@ interface Order {
   id: string
   orderNumber: string
   totalAmount: number
+  shippingAmount: number
   status: string
   paymentStatus: string
   paymentMethod: string
@@ -48,9 +49,6 @@ interface Order {
 }
 
 export default function OrderConfirmationPage() {
-  const searchParams = useSearchParams()
-  const orderId = searchParams.get('orderId')
-
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -60,9 +58,16 @@ export default function OrderConfirmationPage() {
         </div>
       </div>
     }>
-      <OrderConfirmationContent orderId={orderId || ''} />
+      <OrderConfirmationWrapper />
     </Suspense>
   )
+}
+
+function OrderConfirmationWrapper() {
+  const searchParams = useSearchParams()
+  const orderId = searchParams.get('orderId')
+
+  return <OrderConfirmationContent orderId={orderId || ''} />
 }
 
 function OrderConfirmationContent({ orderId }: { orderId: string }) {

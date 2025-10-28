@@ -169,7 +169,7 @@ export default function Header() {
             {session ? (
               <div className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={session.user.profileImage} />
+                  <AvatarImage src={session.user.profileImage || undefined} />
                   <AvatarFallback>
                     {session.user.name?.charAt(0) || session.user.email?.charAt(0) || 'U'}
                   </AvatarFallback>

@@ -3,12 +3,17 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 // GET /api/admin/products/[id] - Get single product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
+    const { id } = await context.params
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email || session.user.role !== 'ADMIN') {
@@ -16,7 +21,7 @@ export async function GET(
     }
 
     const product = await db.tyre.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         brand: true,
         reviews: {
@@ -76,9 +81,10 @@ export async function GET(
 // PUT /api/admin/products/[id] - Update product
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
+    const { id } = await context.params
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email || session.user.role !== 'ADMIN') {
@@ -111,7 +117,7 @@ export async function PUT(
 
     // Check if product exists
     const existingProduct = await db.tyre.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingProduct) {
@@ -131,7 +137,7 @@ export async function PUT(
 
     // Update product
     const product = await db.tyre.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description: description || null }),
@@ -175,9 +181,10 @@ export async function PUT(
 // DELETE /api/admin/products/[id] - Delete product
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
+    const { id } = await context.params
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email || session.user.role !== 'ADMIN') {
@@ -186,7 +193,7 @@ export async function DELETE(
 
     // Check if product exists
     const existingProduct = await db.tyre.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         orderItems: true,
         cartItems: true,
@@ -209,15 +216,15 @@ export async function DELETE(
 
     // Delete related records first
     await Promise.all([
-      db.cartItem.deleteMany({ where: { tyreId: params.id } }),
-      db.wishlistItem.deleteMany({ where: { tyreId: params.id } }),
-      db.review.deleteMany({ where: { tyreId: params.id } }),
-      db.compatibleVehicle.deleteMany({ where: { tyreId: params.id } })
+      db.cartItem.deleteMany({ where: { tyreId: id } }),
+      db.wishlistItem.deleteMany({ where: { tyreId: id } }),
+      db.review.deleteMany({ where: { tyreId: id } }),
+      db.compatibleVehicle.deleteMany({ where: { tyreId: id } })
     ])
 
     // Delete product
     await db.tyre.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({

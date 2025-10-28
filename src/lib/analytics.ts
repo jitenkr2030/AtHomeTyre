@@ -1,5 +1,13 @@
 // Advanced Analytics System
 
+// Google Analytics types
+declare global {
+  interface Window {
+    dataLayer: any[]
+    gtag: (...args: any[]) => void
+  }
+}
+
 export interface AnalyticsEvent {
   name: string
   properties?: Record<string, any>
@@ -141,7 +149,9 @@ export class AnalyticsService {
           const element = target.closest('[data-analytics-event]') as HTMLElement
           const eventName = element.getAttribute('data-analytics-event')
           const eventProperties = JSON.parse(element.getAttribute('data-analytics-properties') || '{}')
-          this.trackEvent(eventName, eventProperties)
+          if (eventName) {
+            this.trackEvent(eventName, eventProperties)
+          }
         }
       })
     }
@@ -170,7 +180,7 @@ export class AnalyticsService {
         referrer: document.referrer,
         timestamp: Date.now()
       },
-      userId: this.userId,
+      userId: this.userId || undefined,
       sessionId: this.sessionId
     }
 
@@ -197,7 +207,7 @@ export class AnalyticsService {
         ...properties,
         timestamp: Date.now()
       },
-      userId: this.userId,
+      userId: this.userId || undefined,
       sessionId: this.sessionId
     }
 

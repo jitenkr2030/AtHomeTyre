@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { sendOrderConfirmationEmail } from '@/app/api/email/send/route'
+import { sendOrderConfirmationEmail } from '@/lib/email'
 
 // Helper function to get user ID from request
 async function getUserId(request: NextRequest): Promise<string | null> {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Create order items and update stock
-    const orderItems = []
+    const orderItems: any[] = []
     for (const cartItem of user.cartItems) {
       const orderItem = await db.orderItem.create({
         data: {

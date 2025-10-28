@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, TyreCategory, TyreSeason, OrderStatus, PaymentStatus, PaymentMethod, ServiceType, ServiceStatus } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -122,7 +122,7 @@ async function main() {
       name: 'ZLX',
       description: 'Premium performance tyre for cars',
       brandId: brands[0].id, // MRF
-      category: 'CAR',
+      category: TyreCategory.CAR,
       width: 205,
       aspectRatio: 55,
       rimDiameter: 16,
@@ -142,7 +142,7 @@ async function main() {
       name: 'Amazer 3G',
       description: 'Comfort and fuel efficiency for city driving',
       brandId: brands[1].id, // Apollo
-      category: 'CAR',
+      category: TyreCategory.CAR,
       width: 185,
       aspectRatio: 65,
       rimDiameter: 14,
@@ -162,7 +162,7 @@ async function main() {
       name: 'Smart UX',
       description: 'Smart tyre for modern vehicles',
       brandId: brands[2].id, // JK Tyre
-      category: 'CAR',
+      category: TyreCategory.CAR,
       width: 195,
       aspectRatio: 60,
       rimDiameter: 15,
@@ -182,7 +182,7 @@ async function main() {
       name: 'Milaze',
       description: 'Durable tyre for rough conditions',
       brandId: brands[3].id, // CEAT
-      category: 'CAR',
+      category: TyreCategory.CAR,
       width: 175,
       aspectRatio: 70,
       rimDiameter: 13,
@@ -202,7 +202,7 @@ async function main() {
       name: 'Nylogrip Zapper',
       description: 'High performance bike tyre',
       brandId: brands[0].id, // MRF
-      category: 'BIKE',
+      category: TyreCategory.BIKE,
       width: 100,
       aspectRatio: 90,
       rimDiameter: 18,
@@ -222,7 +222,7 @@ async function main() {
       name: 'Actizip R3',
       description: 'Sporty bike tyre for performance enthusiasts',
       brandId: brands[1].id, // Apollo
-      category: 'BIKE',
+      category: TyreCategory.BIKE,
       width: 120,
       aspectRatio: 80,
       rimDiameter: 17,
@@ -242,7 +242,7 @@ async function main() {
       name: 'Truck Super Lugs',
       description: 'Heavy duty truck tyre',
       brandId: brands[2].id, // JK Tyre
-      category: 'TRUCK',
+      category: TyreCategory.TRUCK,
       width: 295,
       aspectRatio: 90,
       rimDiameter: 22.5,
@@ -262,7 +262,7 @@ async function main() {
       name: 'Fuel Smarrt',
       description: 'Fuel efficient bus tyre',
       brandId: brands[3].id, // CEAT
-      category: 'BUS',
+      category: TyreCategory.BUS,
       width: 245,
       aspectRatio: 70,
       rimDiameter: 19.5,
@@ -280,6 +280,8 @@ async function main() {
     }
   ]
 
+  const createdTyres: any[] = []
+
   for (const tyreData of tyres) {
     const createdTyre = await prisma.tyre.upsert({
       where: { 
@@ -292,7 +294,7 @@ async function main() {
       create: tyreData
     })
     // Store the created tyre with its ID
-    tyreData.id = createdTyre.id
+    createdTyres.push({ ...tyreData, id: createdTyre.id })
   }
 
   // Create compatible vehicles
@@ -309,7 +311,7 @@ async function main() {
 
   for (const vehicle of compatibleVehicles) {
     const tyre = await prisma.tyre.findFirst({
-      where: { name: tyres[vehicle.tyreIndex].name }
+      where: { name: createdTyres[vehicle.tyreIndex].name }
     })
     
     if (tyre) {
@@ -337,7 +339,7 @@ async function main() {
   const reviews = [
     {
       userId: customerUser.id,
-      tyreId: tyres[0].id, // MRF ZLX
+      tyreId: createdTyres[0].id, // MRF ZLX
       rating: 5,
       title: 'Excellent performance',
       comment: 'These tyres provide amazing grip and handling. Very satisfied with the purchase.',
@@ -347,7 +349,7 @@ async function main() {
     },
     {
       userId: customerUser.id,
-      tyreId: tyres[1].id, // Apollo Amazer 3G
+      tyreId: createdTyres[1].id, // Apollo Amazer 3G
       rating: 4,
       title: 'Good value for money',
       comment: 'Comfortable ride and fuel efficient. Perfect for city driving.',
@@ -357,7 +359,7 @@ async function main() {
     },
     {
       userId: customerUser.id,
-      tyreId: tyres[4].id, // MRF Nylogrip Zapper
+      tyreId: createdTyres[4].id, // MRF Nylogrip Zapper
       rating: 5,
       title: 'Best bike tyres',
       comment: 'Superb grip on wet roads. Cornering is excellent.',
@@ -391,9 +393,9 @@ async function main() {
       totalAmount: 13000,
       discountAmount: 0,
       shippingAmount: 0,
-      status: 'DELIVERED',
-      paymentStatus: 'PAID',
-      paymentMethod: 'CREDIT_CARD',
+      status: OrderStatus.DELIVERED,
+      paymentStatus: PaymentStatus.PAID,
+      paymentMethod: PaymentMethod.CREDIT_CARD,
       shippingAddress: JSON.stringify({
         name: 'John Customer',
         address: '123 Main Street, Mumbai',
@@ -405,7 +407,7 @@ async function main() {
       notes: 'Deliver to office address',
       orderItems: [
         {
-          tyreId: tyres[0].id, // MRF ZLX
+          tyreId: createdTyres[0].id, // MRF ZLX
           quantity: 2,
           unitPrice: 6500,
           totalPrice: 13000
@@ -418,9 +420,9 @@ async function main() {
       totalAmount: 8400,
       discountAmount: 0,
       shippingAmount: 500,
-      status: 'SHIPPED',
-      paymentStatus: 'PAID',
-      paymentMethod: 'UPI',
+      status: OrderStatus.SHIPPED,
+      paymentStatus: PaymentStatus.PAID,
+      paymentMethod: PaymentMethod.UPI,
       shippingAddress: JSON.stringify({
         name: 'John Customer',
         address: '456 Park Avenue, Delhi',
@@ -432,7 +434,7 @@ async function main() {
       notes: 'Gift wrapping required',
       orderItems: [
         {
-          tyreId: tyres[1].id, // Apollo Amazer 3G
+          tyreId: createdTyres[1].id, // Apollo Amazer 3G
           quantity: 2,
           unitPrice: 4200,
           totalPrice: 8400
@@ -498,9 +500,9 @@ async function main() {
   const serviceBookings = [
     {
       userId: customerUser.id,
-      serviceType: 'INSTALLATION',
+      serviceType: ServiceType.INSTALLATION,
       bookingDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-      status: 'CONFIRMED',
+      status: ServiceStatus.CONFIRMED,
       vehicleDetails: JSON.stringify({
         make: 'Toyota',
         model: 'Innova',
@@ -518,9 +520,9 @@ async function main() {
     },
     {
       userId: customerUser.id,
-      serviceType: 'WHEEL_ALIGNMENT',
+      serviceType: ServiceType.WHEEL_ALIGNMENT,
       bookingDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-      status: 'PENDING',
+      status: ServiceStatus.PENDING,
       vehicleDetails: JSON.stringify({
         make: 'Honda',
         model: 'City',
@@ -552,11 +554,11 @@ async function main() {
   const wishlistItems = [
     {
       userId: customerUser.id,
-      tyreId: tyres[2].id // JK Smart UX
+      tyreId: createdTyres[2].id // JK Smart UX
     },
     {
       userId: customerUser.id,
-      tyreId: tyres[4].id // MRF Nylogrip Zapper
+      tyreId: createdTyres[4].id // MRF Nylogrip Zapper
     }
   ]
 
@@ -577,12 +579,12 @@ async function main() {
   const cartItems = [
     {
       userId: customerUser.id,
-      tyreId: tyres[3].id, // CEAT Milaze
+      tyreId: createdTyres[3].id, // CEAT Milaze
       quantity: 1
     },
     {
       userId: customerUser.id,
-      tyreId: tyres[5].id, // Apollo Actizip R3
+      tyreId: createdTyres[5].id, // Apollo Actizip R3
       quantity: 2
     }
   ]

@@ -14,6 +14,17 @@ const nextConfig: NextConfig = {
         ignored: ['**/*'], // 忽略所有文件变化
       };
     }
+    // Exclude mobile-app from TypeScript compilation
+    config.module.rules.push({
+      test: /\.(ts|tsx)$/,
+      exclude: /mobile-app/,
+      use: {
+        loader: 'ts-loader',
+        options: {
+          transpileOnly: true,
+        },
+      },
+    });
     return config;
   },
   eslint: {

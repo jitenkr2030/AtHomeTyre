@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ServiceType, ServiceStatus } from '@prisma/client'
-import { sendServiceBookingConfirmationEmail } from '@/app/api/email/send/route'
+import { sendServiceBookingConfirmationEmail } from '@/lib/email'
 
 export async function GET(request: NextRequest) {
   try {

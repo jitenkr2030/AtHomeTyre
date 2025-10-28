@@ -14,12 +14,10 @@ export async function GET(request: NextRequest) {
       const compatibleVehicles = await db.compatibleVehicle.findMany({
         where: {
           make: {
-            contains: make,
-            mode: 'insensitive'
+            contains: make
           },
           model: {
-            contains: model,
-            mode: 'insensitive'
+            contains: model
           },
           year: parseInt(year)
         },
@@ -134,12 +132,10 @@ export async function POST(request: NextRequest) {
     const compatibleVehicles = await db.compatibleVehicle.findMany({
       where: {
         make: {
-          contains: make,
-          mode: 'insensitive'
+          contains: make
         },
         model: {
-          contains: model,
-          mode: 'insensitive'
+          contains: model
         },
         year: parseInt(year)
       },

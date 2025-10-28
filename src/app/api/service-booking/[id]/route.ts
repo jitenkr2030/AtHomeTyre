@@ -4,11 +4,16 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ServiceStatus } from '@prisma/client'
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
+    const { id } = await context.params
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
@@ -26,7 +31,7 @@ export async function DELETE(
 
     // Get the booking
     const booking = await db.serviceBooking.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!booking) {
@@ -47,7 +52,7 @@ export async function DELETE(
 
     // Update booking status to cancelled
     const updatedBooking = await db.serviceBooking.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: ServiceStatus.CANCELLED }
     })
 

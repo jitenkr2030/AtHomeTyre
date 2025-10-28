@@ -167,10 +167,11 @@ export default function InventoryManagement() {
 
     try {
       // Simulate API call
-      console.log('Stock adjustment:', {
-        productId: selectedProduct.id,
-        ...adjustment
-      })
+      const adjustmentData = {
+        ...adjustment,
+        productId: selectedProduct.id
+      }
+      console.log('Stock adjustment:', adjustmentData)
       
       await fetchInventory()
       setIsAdjustModalOpen(false)

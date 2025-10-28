@@ -9,6 +9,8 @@ declare module 'next-auth' {
       name?: string | null
       role: UserRole
       status: UserStatus
+      phone?: string | null
+      profileImage?: string | null
       customerProfile?: any
       dealerProfile?: any
     }

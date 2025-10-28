@@ -41,13 +41,16 @@ async function handlePaymentSuccess(payload: any) {
 
     // Update or create payment record
     const payment = await db.payment.upsert({
-      where: { transactionId: transactionId },
+      where: { 
+        id: `payment_${orderId}_${transactionId}` 
+      },
       update: {
         status: PaymentStatus.PAID,
         paymentDate: new Date(),
         gatewayResponse: gatewayResponse
       },
       create: {
+        id: `payment_${orderId}_${transactionId}`,
         orderId: orderId,
         amount: amount,
         paymentMethod: payload.paymentMethod || 'UNKNOWN',
@@ -91,7 +94,9 @@ async function handlePaymentFailed(payload: any) {
 
     // Update or create payment record
     const payment = await db.payment.upsert({
-      where: { transactionId: transactionId },
+      where: { 
+        id: `payment_${orderId}_${transactionId}` 
+      },
       update: {
         status: PaymentStatus.FAILED,
         gatewayResponse: {
@@ -100,6 +105,7 @@ async function handlePaymentFailed(payload: any) {
         }
       },
       create: {
+        id: `payment_${orderId}_${transactionId}`,
         orderId: orderId,
         amount: order.totalAmount,
         paymentMethod: payload.paymentMethod || 'UNKNOWN',
@@ -145,16 +151,19 @@ async function handlePaymentCancelled(payload: any) {
 
     // Update or create payment record
     const payment = await db.payment.upsert({
-      where: { transactionId: transactionId },
+      where: { 
+        id: `payment_${orderId}_${transactionId}` 
+      },
       update: {
-        status: PaymentStatus.CANCELLED,
+        status: PaymentStatus.FAILED,
         gatewayResponse: gatewayResponse
       },
       create: {
+        id: `payment_${orderId}_${transactionId}`,
         orderId: orderId,
         amount: order.totalAmount,
         paymentMethod: payload.paymentMethod || 'UNKNOWN',
-        status: PaymentStatus.CANCELLED,
+        status: PaymentStatus.FAILED,
         transactionId: transactionId,
         gatewayResponse: gatewayResponse
       }
@@ -164,7 +173,7 @@ async function handlePaymentCancelled(payload: any) {
     await db.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: PaymentStatus.CANCELLED,
+        paymentStatus: PaymentStatus.FAILED,
         status: 'CANCELLED'
       }
     })

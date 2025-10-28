@@ -32,6 +32,7 @@ interface Review {
     id: string
     name?: string
     email?: string
+    profileImage?: string
   }
 }
 
@@ -171,7 +172,7 @@ export default function ReviewList({ tyreId, onReviewAdded }: ReviewListProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={review.user.profileImage} />
+                      <AvatarImage src={review.user.profileImage || undefined} />
                       <AvatarFallback>
                         {review.user.name?.charAt(0) || review.user.email?.charAt(0) || 'U'}
                       </AvatarFallback>
